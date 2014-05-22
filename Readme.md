@@ -59,6 +59,14 @@ GET /?url=www.google.com&callback=http://www.myservice.com/screenshot/google
 # then send a POST request to the callback URL when the screenshot is ready
 # with the PNG image in the body.
 
+
+# Asynchronous call and upload to Amazone S3
+GET /?url=www.google.com&callback=http://www.myservice.com/screenshot&uploadToS3=true
+
+callback:
+POST http://www.myservice.com/screenshot
+{"url": url, "s3_url: "xxxxx.s3.com""}
+
 # Screenshot delay
 GET /?url=www.google.com&delay=1000
 # Return a 1024x600 PNG screenshot of the www.google.com homepage

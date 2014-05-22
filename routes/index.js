@@ -3,6 +3,8 @@ var join = require('path').join;
 var fs = require('fs');
 var path = require('path');
 var request = require('request');
+var AWS = require('aws-sdk');
+var s3 = new AWS.S3();
 
 module.exports = function(app, useCors) {
   var rasterizerService = app.settings.rasterizerService;
@@ -20,7 +22,7 @@ module.exports = function(app, useCors) {
       uri: 'http://localhost:' + rasterizerService.getPort() + '/',
       headers: { url: url }
     };
-    ['width', 'height', 'clipRect', 'javascriptEnabled', 'loadImages', 'localToRemoteUrlAccessEnabled', 'userAgent', 'userName', 'password', 'delay'].forEach(function(name) {
+    ['width', 'height', 'clipRect', 'javascriptEnabled', 'loadImages', 'localToRemoteUrlAccessEnabled', 'userAgent', 'userName', 'password', 'delay', 'uploadToS3'].forEach(function(name) {
       if (req.param(name, false)) options.headers[name] = req.param(name);
     });
 
@@ -32,11 +34,12 @@ module.exports = function(app, useCors) {
     var callbackUrl = req.param('callback', false) ? utils.url(req.param('callback')) : false;
 
     if (fs.existsSync(filePath)) {
-      console.log('Request for %s - Found in cache', url);
+      console.log('Request for %s - Found in cache', url, ' filePath: ', filePath);
       processImageUsingCache(filePath, res, callbackUrl, function(err) { if (err) next(err); });
       return;
     }
     console.log('Request for %s - Rasterizing it', url);
+    console.log('Reeust options: ', options)
     processImageUsingRasterizer(options, filePath, res, callbackUrl, function(err) { if(err) next(err); });
   });
 
@@ -57,19 +60,26 @@ module.exports = function(app, useCors) {
     }
   }
 
-  var processImageUsingRasterizer = function(rasterizerOptions, filePath, res, url, callback) {
-    if (url) {
+  var processImageUsingRasterizer = function(rasterizerOptions, filePath, res, callbackUrl, errorCallback) {
+    if (callbackUrl) {
       // asynchronous
-      res.send('Will post screenshot to ' + url + ' when processed');
+      res.send('Will post screenshot to ' + callbackUrl + ' when processed');
       callRasterizer(rasterizerOptions, function(error) {
-        if (error) return callback(error);
-        postImageToUrl(filePath, url, callback);
+        if (error) return errorCallback(error);
+
+        // if uploadToS3, then upload the image and post the S3 url to callback
+        if (rasterizerOptions.headers.uploadToS3 == 'true') {
+          postImageToS3(filePath, callbackUrl, errorCallback);
+        }
+        else {
+          postImageToUrl(filePath, callbackUrl, errorCallback);
+        }
       });
     } else {
       // synchronous
       callRasterizer(rasterizerOptions, function(error) {
-        if (error) return callback(error);
-        sendImageInResponse(filePath, res, callback);
+        if (error) return errorCallback(error);
+        sendImageInResponse(filePath, res, errorCallback);
       });
     }
   }
@@ -99,6 +109,28 @@ module.exports = function(app, useCors) {
       if (err) console.log('Error while streaming screenshot: %s', err);
       callback(err);
     }));
+  }
+
+  var postImageToS3 = function(imagePath, callbackUrl, errorCallback) {
+    var fileBuffer = fs.readFileSync(imagePath);
+    console.log('postImageToS3....')
+    // upload to S3
+    s3.putObject({
+      ACL: 'public-read',
+      Bucket: 'strikingly-staging-v1',
+      Key: 'screenshots/someshit1.png',
+      Body: fileBuffer,
+      ContentType: 'image/png'
+    }, function(error, message) {
+      if (error) {
+        console.log('uploading ', imagePath, ' failed')
+      } else {
+        console.log('uploading ', imagePath, ' success')
+      }
+    })
+
+    // post to callbackUrl with S3 url
+
   }
 
   var sendImageInResponse = function(imagePath, res, callback) {
