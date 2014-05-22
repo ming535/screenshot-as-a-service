@@ -33,11 +33,13 @@ module.exports = function(app, useCors) {
 
     var callbackUrl = req.param('callback', false) ? utils.url(req.param('callback')) : false;
 
-    if (fs.existsSync(filePath)) {
-      console.log('Request for %s - Found in cache', url, ' filePath: ', filePath);
-      processImageUsingCache(filePath, res, callbackUrl, function(err) { if (err) next(err); });
-      return;
-    }
+    // dont use cache
+    // if (fs.existsSync(filePath)) {
+    //   console.log('Request for %s - Found in cache', url, ' filePath: ', filePath);
+    //   processImageUsingCache(filePath, res, callbackUrl, function(err) { if (err) next(err); });
+    //   return;
+    // }
+
     console.log('Request for %s - Rasterizing it', url);
     console.log('Reeust options: ', options)
     processImageUsingRasterizer(options, filePath, res, callbackUrl, function(err) { if(err) next(err); });
