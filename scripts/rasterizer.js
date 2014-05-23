@@ -76,10 +76,10 @@ service = server.listen(port, function(request, response) {
     //   page.clipRect = JSON.parse(request.headers.clipRect);
     // }
     page.clipRect = {
-      top: 14,
-      left: 3,
-      width: 1024,
-      height: 600
+      top: 0,
+      left: 0,
+      width: defaultViewportSize.width,
+      height: defaultViewportSize.height
     };
     for (name in pageSettings) {
       if (value = request.headers[pageSettings[name]]) {
