@@ -79,7 +79,7 @@ service = server.listen(port, function(request, response) {
       top: 14,
       left: 3,
       width: 1024,
-      height: 400
+      height: 600
     };
     for (name in pageSettings) {
       if (value = request.headers[pageSettings[name]]) {
