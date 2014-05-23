@@ -72,9 +72,15 @@ service = server.listen(port, function(request, response) {
       width: request.headers.width || defaultViewportSize.width,
       height: request.headers.height || defaultViewportSize.height
     };
-    if (request.headers.clipRect) {
-      page.clipRect = JSON.parse(request.headers.clipRect);
-    }
+    // if (request.headers.clipRect) {
+    //   page.clipRect = JSON.parse(request.headers.clipRect);
+    // }
+    page.clipRect = {
+      top: 14,
+      left: 3,
+      width: 1024,
+      height: 400
+    };
     for (name in pageSettings) {
       if (value = request.headers[pageSettings[name]]) {
         value = (value == 'false') ? false : ((value == 'true') ? true : value);

@@ -6,5 +6,5 @@ rasterizer:
 cache:
   lifetime: 0      # one minute, set to 0 for no cache
 server:
-  port: 3000           # main service port
+  port: 5000           # main service port
   useCors: false       # enable CORS support

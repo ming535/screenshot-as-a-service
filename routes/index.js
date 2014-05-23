@@ -12,6 +12,7 @@ module.exports = function(app, useCors) {
 
   // routes
   app.get('/', function(req, res, next) {
+
     if (!req.param('url', false)) {
       return res.redirect('/usage.html');
     }
@@ -42,7 +43,8 @@ module.exports = function(app, useCors) {
 
     console.log('Request for %s - Rasterizing it', url);
     console.log('Reeust options: ', options)
-    processImageUsingRasterizer(options, filePath, res, callbackUrl, function(err) { if(err) next(err); });
+    var s3Filename = filename
+    processImageUsingRasterizer(options, filePath, s3Filename, res, callbackUrl, function(err) { if(err) next(err); });
   });
 
   app.get('*', function(req, res, next) {
@@ -62,7 +64,7 @@ module.exports = function(app, useCors) {
     }
   }
 
-  var processImageUsingRasterizer = function(rasterizerOptions, filePath, res, callbackUrl, errorCallback) {
+  var processImageUsingRasterizer = function(rasterizerOptions, filePath, s3Filename, res, callbackUrl, errorCallback) {
     if (callbackUrl) {
       // asynchronous
       res.send('Will post screenshot to ' + callbackUrl + ' when processed');
@@ -71,7 +73,7 @@ module.exports = function(app, useCors) {
 
         // if uploadToS3, then upload the image and post the S3 url to callback
         if (rasterizerOptions.headers.uploadToS3 == 'true') {
-          postImageToS3(filePath, callbackUrl, errorCallback);
+          uploadImageToS3(filePath, s3Filename, callbackUrl, errorCallback);
         }
         else {
           postImageToUrl(filePath, callbackUrl, errorCallback);
@@ -113,26 +115,47 @@ module.exports = function(app, useCors) {
     }));
   }
 
-  var postImageToS3 = function(imagePath, callbackUrl, errorCallback) {
+  var uploadImageToS3 = function(imagePath, s3Filename, callbackUrl, errorCallback) {
     var fileBuffer = fs.readFileSync(imagePath);
-    console.log('postImageToS3....')
+    console.log('uploadImageToS3....')
+
+    var bucket = 'strikingly-staging-v1';
+    var key = 'screenshots/' + s3Filename;
+
     // upload to S3
     s3.putObject({
       ACL: 'public-read',
-      Bucket: 'strikingly-staging-v1',
-      Key: 'screenshots/someshit1.png',
+      Bucket: bucket,
+      Key: key,
       Body: fileBuffer,
       ContentType: 'image/png'
     }, function(error, message) {
       if (error) {
         console.log('uploading ', imagePath, ' failed')
+        errorCallback(error)
       } else {
         console.log('uploading ', imagePath, ' success')
+        // post to callbackUrl with S3 url
+        postS3Url(bucket, key, callbackUrl, errorCallback)
       }
     })
 
-    // post to callbackUrl with S3 url
+  }
 
+  var postS3Url = function(bucket, key, callbackUrl, errorCallback) {
+    var url = "https://s3.amazonaws.com/" + bucket + '/' + key
+    console.log('postS3Url: ', url)
+    console.log('postS3Url: callbackUrl: ', callbackUrl)
+    request.post(callbackUrl, {
+      json: {
+        s3_url: url
+      }
+    }, function(err) {
+      if (err) {
+        console.log("Error while postS3Url to callback")
+        errorCallback(err)
+      }
+    })
   }
 
   var sendImageInResponse = function(imagePath, res, callback) {
