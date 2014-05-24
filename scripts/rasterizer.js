@@ -75,11 +75,16 @@ service = server.listen(port, function(request, response) {
     // if (request.headers.clipRect) {
     //   page.clipRect = JSON.parse(request.headers.clipRect);
     // }
+
+    if (request.headers.zoomFactor) {
+      page.zoomFactor = parseFloat(request.headers.zoomFactor)
+    }
+
     page.clipRect = {
       top: 0,
       left: 0,
-      width: defaultViewportSize.width,
-      height: defaultViewportSize.height
+      width: page.viewportSize.width,
+      height: page.viewportSize.height
     };
     for (name in pageSettings) {
       if (value = request.headers[pageSettings[name]]) {
