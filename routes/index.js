@@ -23,17 +23,33 @@ module.exports = function(app, useCors) {
       uri: 'http://localhost:' + rasterizerService.getPort() + '/',
       headers: { url: url }
     };
-    ['width', 'height', 'clipRect', 'javascriptEnabled', 'loadImages', 'localToRemoteUrlAccessEnabled', 'userAgent', 'userName', 'password', 'delay', 'uploadToS3', 'zoomFactor'].forEach(function(name) {
+
+    ['clipRect', 'javascriptEnabled', 'loadImages', 'localToRemoteUrlAccessEnabled', 'userAgent', 'userName', 'password', 'delay', 'uploadToS3', 'zoomFactor'].forEach(function(name) {
       if (req.param(name, false)) options.headers[name] = req.param(name);
     });
 
-    var filename = 'screenshot_' + utils.md5(url + JSON.stringify(options)) + '.png';
+    // filename is a has of options and width and height of image
+    var filename = null;
+    console.log(req.param)
+    if (req.param('width') || req.param('height')) {
+      filename = 'screenshot_' + utils.md5(url + JSON.stringify(options)) + '-' + String(req.param('width')) + '-' + String(req.param('height')) + '.png';
+    } else {
+      filename = 'screenshot_' + utils.md5(url + JSON.stringify(options)) + '.png';
+    }
+
+    // fill in options of width and heigth here
+    ['width', 'height'].forEach(function(name) {
+      if (req.param(name, false)) options.headers[name] = req.param(name);
+    })
+
     options.headers.filename = filename;
 
     var filePath = join(rasterizerService.getPath(), filename);
 
-    var callbackUrl = req.param('callback', false) ? utils.url(req.param('callback')) : false;
+    console.log('filePath: ', filePath)
 
+    var callbackUrl = req.param('callback', false) ? utils.url(req.param('callback')) : false;
+    console.log('callbackUrl: ', callbackUrl)
     // dont use cache
     // if (fs.existsSync(filePath)) {
     //   console.log('Request for %s - Found in cache', url, ' filePath: ', filePath);
@@ -65,15 +81,17 @@ module.exports = function(app, useCors) {
   }
 
   var processImageUsingRasterizer = function(rasterizerOptions, filePath, s3Filename, res, callbackUrl, errorCallback) {
+    console.log('processImageUsingRasterizer...');
     if (callbackUrl) {
       // asynchronous
       res.send('Will post screenshot to ' + callbackUrl + ' when processed');
+      console.log("Will callRasterizer and return async");
       callRasterizer(rasterizerOptions, function(error) {
         if (error) return errorCallback(error);
 
         // if uploadToS3, then upload the image and post the S3 url to callback
         if (rasterizerOptions.headers.uploadToS3 == 'true') {
-          uploadImageToS3(filePath, s3Filename, callbackUrl, errorCallback);
+          uploadImageToS3(rasterizerOptions, filePath, s3Filename, callbackUrl, errorCallback);
         }
         else {
           postImageToUrl(filePath, callbackUrl, errorCallback);
@@ -115,7 +133,7 @@ module.exports = function(app, useCors) {
     }));
   }
 
-  var uploadImageToS3 = function(imagePath, s3Filename, callbackUrl, errorCallback) {
+  var uploadImageToS3 = function(rasterizerOptions, imagePath, s3Filename, callbackUrl, errorCallback) {
     var fileBuffer = fs.readFileSync(imagePath);
     console.log('uploadImageToS3....')
 
@@ -136,20 +154,30 @@ module.exports = function(app, useCors) {
       } else {
         console.log('uploading ', imagePath, ' success')
         // post to callbackUrl with S3 url
-        postS3Url(bucket, key, callbackUrl, errorCallback)
+        postS3Url(rasterizerOptions, bucket, key, callbackUrl, errorCallback)
       }
     })
 
   }
 
-  var postS3Url = function(bucket, key, callbackUrl, errorCallback) {
+  var postS3Url = function(rasterizerOptions, bucket, key, callbackUrl, errorCallback) {
     var url = "https://s3.amazonaws.com/" + bucket + '/' + key
     console.log('postS3Url: ', url)
     console.log('postS3Url: callbackUrl: ', callbackUrl)
-    request.post(callbackUrl, {
-      json: {
+    if (rasterizerOptions.headers.width || rasterizerOptions.headers.height) {
+      postData = {
+        s3_url: url,
+        width: rasterizerOptions.headers.width,
+        height: rasterizerOptions.headers.height
+      }
+    } else {
+      postData = {
         s3_url: url
       }
+    }
+
+    request.post(callbackUrl, {
+      json: postData
     }, function(err) {
       if (err) {
         console.log("Error while postS3Url to callback")

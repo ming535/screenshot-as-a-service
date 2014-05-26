@@ -65,6 +65,9 @@ service = server.listen(port, function(request, response) {
   }
   var url = request.headers.url;
   var path = basePath + (request.headers.filename || (url.replace(new RegExp('https?://'), '').replace(/\//g, '.') + '.png'));
+
+  console.log("----------- path: ", path);
+
   var page = new WebPage();
   var delay = request.headers.delay || 0;
   try {
@@ -100,6 +103,7 @@ service = server.listen(port, function(request, response) {
   page.open(url, function(status) {
     if (status == 'success') {
       window.setTimeout(function () {
+        console.log('render: ', path)
         page.render(path);
         response.write('Success: Screenshot saved to ' + path + "\n");
         page.release();
