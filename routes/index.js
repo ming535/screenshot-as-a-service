@@ -137,7 +137,13 @@ module.exports = function(app, useCors) {
     var fileBuffer = fs.readFileSync(imagePath);
     console.log('uploadImageToS3....')
 
-    var bucket = 'strikingly-staging-v1';
+    var bucket;
+    if (process.env.NODE_ENV == 'production') {
+      bucket = 'strikingly-production-v1';
+    } else {
+      bucket = 'strikingly-staging-v1';
+    }
+
     var key = 'screenshots/' + s3Filename;
 
     // upload to S3
