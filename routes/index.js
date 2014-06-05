@@ -173,14 +173,17 @@ module.exports = function(app, useCors) {
     if (rasterizerOptions.headers.width || rasterizerOptions.headers.height) {
       postData = {
         s3_url: url,
-        width: rasterizerOptions.headers.width,
-        height: rasterizerOptions.headers.height
+        width: rasterizerOptions.headers.width || 1024,
+        height: rasterizerOptions.headers.height || 768
       }
     } else {
       postData = {
-        s3_url: url
+        s3_url: url,
+        width: 1024,
+        height: 768
       }
     }
+    console.log("postData: ", postData);
 
     request.post(callbackUrl, {
       json: postData
