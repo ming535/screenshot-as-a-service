@@ -5,6 +5,7 @@ var path = require('path');
 var request = require('request');
 var AWS = require('aws-sdk');
 var s3 = new AWS.S3();
+var gm = require('gm');
 
 module.exports = function(app, useCors) {
   var rasterizerService = app.settings.rasterizerService;
@@ -24,13 +25,16 @@ module.exports = function(app, useCors) {
       headers: { url: url }
     };
 
-    ['clipRect', 'javascriptEnabled', 'loadImages', 'localToRemoteUrlAccessEnabled', 'userAgent', 'userName', 'password', 'delay', 'uploadToS3', 'zoomFactor'].forEach(function(name) {
+    ['v', 'dimentions', 'clipRect', 'javascriptEnabled', 'loadImages', 'localToRemoteUrlAccessEnabled', 'userAgent', 'userName', 'password', 'delay', 'uploadToS3', 'zoomFactor'].forEach(function(name) {
       if (req.param(name, false)) options.headers[name] = req.param(name);
     });
 
+    console.log('req.dimentions: ', req.param('dimentions'))
+    options.headers['dimentions'] = JSON.parse(req.param('dimentions'))
+
     // filename is a has of options and width and height of image
     var filename = null;
-    console.log(req.param)
+
     if (req.param('width') || req.param('height')) {
       filename = 'screenshot_' + utils.md5(url + JSON.stringify(options)) + '-' + String(req.param('width')) + '-' + String(req.param('height')) + '.png';
     } else {
@@ -146,7 +150,40 @@ module.exports = function(app, useCors) {
 
     var key = 'screenshots/' + s3Filename;
 
-    // upload to S3
+    // upload resized version
+    if (rasterizerOptions.headers.dimentions) {
+      rasterizerOptions.headers.dimentions.forEach(function(dimention) {
+        var imageMagick = gm.subClass({ imageMagick: true });
+        imageMagick(imagePath).resize(dimention.width, dimention.height)
+          .stream(function(err, stdout, stderr) {
+            var buf = new Buffer(0);
+            stdout.on('data', function(d) {
+              buf = Buffer.concat([buf, d]);
+            });
+            stdout.on('end', function() {
+              var dimentionKey = key.substring(0, key.length - 4) + '_' + dimention.width + '-' + dimention.height + '.png';
+              var data = {
+                ACL: 'public-read',
+                Bucket: bucket,
+                Key: dimentionKey,
+                Body: buf,
+                ContentType: 'image/png'
+              };
+              s3.client.putObject(data, function(error, res) {
+                if (error) {
+                  console.log('uploading ', dimentionKey, ' failed')
+                  console.log(error)
+                } else {
+                  console.log('uploading ', dimentionKey, ' success')
+                }
+              });
+            });
+          });
+
+      });
+    }
+
+    // upload original version to S3
     s3.putObject({
       ACL: 'public-read',
       Bucket: bucket,
@@ -172,11 +209,13 @@ module.exports = function(app, useCors) {
     var url = "https://s3.amazonaws.com/" + bucket + '/' + key
     console.log('postS3Url: ', url)
     console.log('postS3Url: callbackUrl: ', callbackUrl)
-    if (rasterizerOptions.headers.width || rasterizerOptions.headers.height) {
+    if (rasterizerOptions.headers.dimentions) {
+      var dimentions = rasterizerOptions.headers.dimentions;
+      dimentions.push({width: 1080, height: 640})
       postData = {
         s3_url: url,
-        width: rasterizerOptions.headers.width || 1024,
-        height: rasterizerOptions.headers.height || 768
+        dimentions: dimentions,
+        v: rasterizerOptions.headers.v
       }
     } else {
       postData = {
