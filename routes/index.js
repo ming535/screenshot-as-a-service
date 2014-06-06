@@ -7,6 +7,9 @@ var AWS = require('aws-sdk');
 var s3 = new AWS.S3();
 var gm = require('gm');
 
+var DEFAULT_WIDTH = 1080;
+var DEFAULT_HEIGHT = 640;
+
 module.exports = function(app, useCors) {
   var rasterizerService = app.settings.rasterizerService;
   var fileCleanerService = app.settings.fileCleanerService;
@@ -139,6 +142,10 @@ module.exports = function(app, useCors) {
     }));
   }
 
+  var keyToS3 = function(key, width, height) {
+    return key.substring(0, key.length - 4) + '_' + width + '-' + height + '.png';
+  };
+
   var uploadImageToS3 = function(rasterizerOptions, imagePath, s3Filename, callbackUrl, errorCallback) {
     var fileBuffer = fs.readFileSync(imagePath);
     console.log('uploadImageToS3....')
@@ -163,7 +170,7 @@ module.exports = function(app, useCors) {
               buf = Buffer.concat([buf, d]);
             });
             stdout.on('end', function() {
-              var dimentionKey = key.substring(0, key.length - 4) + '_' + dimention.width + '-' + dimention.height + '.png';
+              var dimentionKey = keyToS3(key, dimention.width, dimention.height)
               var data = {
                 ACL: 'public-read',
                 Bucket: bucket,
@@ -186,10 +193,12 @@ module.exports = function(app, useCors) {
     }
 
     // upload original version to S3
+    var defaultKey = keyToS3(key, DEFAULT_WIDTH, DEFAULT_HEIGHT);
+
     s3.putObject({
       ACL: 'public-read',
       Bucket: bucket,
-      Key: key,
+      Key: defaultKey,
       Body: fileBuffer,
       ContentType: 'image/png'
     }, function(error, message) {
@@ -213,9 +222,12 @@ module.exports = function(app, useCors) {
     console.log('postS3Url: callbackUrl: ', callbackUrl)
     if (rasterizerOptions.headers.dimentions) {
       var dimentions = rasterizerOptions.headers.dimentions;
-      dimentions.push({width: 1080, height: 640})
+      dimentions.push({width: DEFAULT_WIDTH, height: DEFAULT_HEIGHT})
+      dimentions.map(function(d) {
+        d.url = "https://s3.amazonaws.com/" + bucket + '/' + keyToS3(key, d.width, d.height)
+      });
+
       postData = {
-        s3_url: url,
         dimentions: dimentions,
         v: rasterizerOptions.headers.v
       }
