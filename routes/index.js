@@ -29,8 +29,10 @@ module.exports = function(app, useCors) {
       if (req.param(name, false)) options.headers[name] = req.param(name);
     });
 
-    console.log('req.dimentions: ', req.param('dimentions'))
-    options.headers['dimentions'] = JSON.parse(req.param('dimentions'))
+    if (req.param('dimentions')) {
+      console.log('req.dimentions: ', req.param('dimentions'))
+      options.headers['dimentions'] = JSON.parse(req.param('dimentions'))
+    }
 
     // filename is a has of options and width and height of image
     var filename = null;
