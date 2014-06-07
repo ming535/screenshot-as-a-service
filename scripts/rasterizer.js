@@ -106,7 +106,7 @@ service = server.listen(port, function(request, response) {
     if (status == 'success') {
       window.setTimeout(function () {
         console.log('render: ', path)
-        page.render(path);
+        page.render(path, {format: 'jpeg', quality: '100'});
         response.write('Success: Screenshot saved to ' + path + "\n");
         page.release();
         response.close();
