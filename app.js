@@ -1,6 +1,7 @@
 /**
  * Module dependencies.
  */
+require('newrelic');
 var config = require('config');
 var express = require('express');
 var RasterizerService = require('./lib/rasterizerService');
