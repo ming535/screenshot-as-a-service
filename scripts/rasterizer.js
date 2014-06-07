@@ -83,12 +83,14 @@ service = server.listen(port, function(request, response) {
       page.zoomFactor = parseFloat(request.headers.zoomFactor)
     }
 
-    page.clipRect = {
-      top: 0,
-      left: 0,
-      width: page.viewportSize.width,
-      height: page.viewportSize.height
-    };
+    if (!request.headers.original) {
+      page.clipRect = {
+        top: 0,
+        left: 0,
+        width: page.viewportSize.width,
+        height: page.viewportSize.height
+      };
+    }
     for (name in pageSettings) {
       if (value = request.headers[pageSettings[name]]) {
         value = (value == 'false') ? false : ((value == 'true') ? true : value);

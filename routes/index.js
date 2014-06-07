@@ -28,7 +28,7 @@ module.exports = function(app, useCors) {
       headers: { url: url }
     };
 
-    ['v', 'dimentions', 'clipRect', 'javascriptEnabled', 'loadImages', 'localToRemoteUrlAccessEnabled', 'userAgent', 'userName', 'password', 'delay', 'uploadToS3', 'zoomFactor'].forEach(function(name) {
+    ['original', 'v', 'dimentions', 'clipRect', 'javascriptEnabled', 'loadImages', 'localToRemoteUrlAccessEnabled', 'userAgent', 'userName', 'password', 'delay', 'uploadToS3', 'zoomFactor'].forEach(function(name) {
       if (req.param(name, false)) options.headers[name] = req.param(name);
     });
 
