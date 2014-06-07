@@ -41,9 +41,9 @@ module.exports = function(app, useCors) {
     var filename = null;
 
     if (req.param('width') || req.param('height')) {
-      filename = 'screenshot_' + utils.md5(url + JSON.stringify(options)) + '-' + String(req.param('width')) + '-' + String(req.param('height')) + '.png';
+      filename = 'screenshot_' + utils.md5(url + JSON.stringify(options)) + '-' + String(req.param('width')) + '-' + String(req.param('height')) + '.jpg';
     } else {
-      filename = 'screenshot_' + utils.md5(url + JSON.stringify(options)) + '.png';
+      filename = 'screenshot_' + utils.md5(url + JSON.stringify(options)) + '.jpg';
     }
 
     // fill in options of width and heigth here
@@ -143,7 +143,7 @@ module.exports = function(app, useCors) {
   }
 
   var keyToS3 = function(key, width, height) {
-    return key.substring(0, key.length - 4) + '_' + width + '-' + height + '.png';
+    return key.substring(0, key.length - 4) + '_' + width + '-' + height + '.jpg';
   };
 
   var uploadImageToS3 = function(rasterizerOptions, imagePath, s3Filename, callbackUrl, errorCallback) {
@@ -176,7 +176,7 @@ module.exports = function(app, useCors) {
                 Bucket: bucket,
                 Key: dimentionKey,
                 Body: buf,
-                ContentType: 'image/png'
+                ContentType: 'image/jpg'
               };
               s3.client.putObject(data, function(error, res) {
                 if (error) {
@@ -200,7 +200,7 @@ module.exports = function(app, useCors) {
       Bucket: bucket,
       Key: defaultKey,
       Body: fileBuffer,
-      ContentType: 'image/png'
+      ContentType: 'image/jpg'
     }, function(error, message) {
       if (error) {
         console.log('uploading ', imagePath, ' failed')
