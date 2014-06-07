@@ -209,8 +209,8 @@ module.exports = function(app, useCors) {
         console.log('uploading ', imagePath, ' success')
         // post to callbackUrl with S3 url
         postS3Url(rasterizerOptions, bucket, key, callbackUrl, errorCallback)
-        // fs.unlinkSync(imagePath);
-        // console.log("successfully deleted " + imagePath);
+        fs.unlinkSync(imagePath);
+        console.log("successfully deleted " + imagePath);
       }
     })
 
