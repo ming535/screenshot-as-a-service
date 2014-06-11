@@ -104,6 +104,7 @@ service = server.listen(port, function(request, response) {
   }
   page.open(url, function(status) {
     if (status == 'success') {
+      console.log('page opened');
       window.setTimeout(function () {
         console.log('render: ', path)
         page.render(path, {format: 'jpeg', quality: '100'});
