@@ -70,6 +70,9 @@ service = server.listen(port, function(request, response) {
 
   var page = new WebPage();
   var delay = request.headers.delay || 0;
+
+  console.log("----------- delay: ", delay);
+
   try {
     page.viewportSize = {
       width: request.headers.width || defaultViewportSize.width,
@@ -118,6 +121,7 @@ service = server.listen(port, function(request, response) {
       response.close();
     }
   });
+  console.log("----------- open..: ", delay);
   // must start the response now, or phantom closes the connection
   response.statusCode = 200;
   response.write('');
