@@ -7,6 +7,7 @@ var express = require('express');
 var RasterizerService = require('./lib/rasterizerService');
 var FileCleanerService = require('./lib/fileCleanerService');
 
+
 process.on('uncaughtException', function (err) {
   console.error("[uncaughtException]", err);
   process.exit(1);
