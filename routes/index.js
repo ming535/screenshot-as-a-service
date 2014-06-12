@@ -28,22 +28,21 @@ module.exports = function(app, useCors) {
       headers: { url: url }
     };
 
-    ['original', 'v', 'dimentions', 'clipRect', 'javascriptEnabled', 'loadImages', 'localToRemoteUrlAccessEnabled', 'userAgent', 'userName', 'password', 'delay', 'uploadToS3', 'zoomFactor'].forEach(function(name) {
+    ['page_id', 'original', 'v', 'dimentions', 'clipRect', 'javascriptEnabled', 'loadImages', 'localToRemoteUrlAccessEnabled', 'userAgent', 'userName', 'password', 'delay', 'uploadToS3', 'zoomFactor'].forEach(function(name) {
       if (req.param(name, false)) options.headers[name] = req.param(name);
     });
 
-    if (req.param('dimentions')) {
-      console.log('req.dimentions: ', req.param('dimentions'))
-      options.headers['dimentions'] = JSON.parse(req.param('dimentions'))
+    if (req.param('page_id')) {
+      console.log('req.page_id: ', req.param('page_id'));
     }
 
     // filename is a has of options and width and height of image
     var filename = null;
 
     if (req.param('width') || req.param('height')) {
-      filename = 'screenshot_' + utils.md5(url + JSON.stringify(options)) + '-' + String(req.param('width')) + '-' + String(req.param('height')) + '.jpg';
+      filename = 'screenshot_' + utils.md5(req.param('page_id')) + '-' + String(req.param('width')) + '-' + String(req.param('height')) + '.jpg';
     } else {
-      filename = 'screenshot_' + utils.md5(url + JSON.stringify(options)) + '.jpg';
+      filename = 'screenshot_' + utils.md5(req.param('page_id')) + '.jpg';
     }
 
     // fill in options of width and heigth here
