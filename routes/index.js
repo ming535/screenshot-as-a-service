@@ -117,6 +117,9 @@ module.exports = function(app, useCors) {
 
   var callRasterizer = function(rasterizerOptions, callback) {
     request.get(rasterizerOptions, function(error, response, body) {
+      if (body.match(/Error:/)) {
+        return callback(new Error(body));
+      }
       if (error || response.statusCode != 200) {
         console.log('Error while requesting the rasterizer: %s', error.message);
         rasterizerService.restartService();
