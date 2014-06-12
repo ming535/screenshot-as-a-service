@@ -32,6 +32,10 @@ module.exports = function(app, useCors) {
       if (req.param(name, false)) options.headers[name] = req.param(name);
     });
 
+    if (req.param('dimentions')) {
+      options.headers['dimentions'] = JSON.parse(req.param('dimentions'))
+    }
+
     if (req.param('page_id')) {
       console.log('req.page_id: ', req.param('page_id'));
     }
