@@ -70,7 +70,7 @@ service = server.listen(port, function(request, response) {
 
   var page = new WebPage();
   var delay = request.headers.delay || 0;
-  delay = 200;
+  // delay = 200;
   console.log("----------- delay: ", delay);
 
   try {
