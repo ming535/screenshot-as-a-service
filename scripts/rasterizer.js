@@ -109,6 +109,7 @@ service = server.listen(port, function(request, response) {
     if (status == 'success') {
       console.log('page opened');
       window.setTimeout(function () {
+        console.error("----- going to render")
         console.log('render: ', path)
         page.render(path, {format: 'jpeg', quality: '100'});
         response.write('Success: Screenshot saved to ' + path + "\n");
@@ -121,7 +122,7 @@ service = server.listen(port, function(request, response) {
       response.close();
     }
   });
-  console.log("----------- open..: ", delay);
+  console.log("----------- open called..: ");
   // must start the response now, or phantom closes the connection
   response.statusCode = 200;
   response.write('');
