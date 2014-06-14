@@ -105,6 +105,16 @@ service = server.listen(port, function(request, response) {
     response.write('Error while parsing headers: ' + err.message);
     return response.close();
   }
+
+  page.onResourceReceived = function(rsp) {
+    console.log("response status: ", rsp.status);
+    if (rsp.status == 404) {
+      response.write('Error: Url returned status ' + status + "\n");
+      page.release();
+      // response.close();
+    }
+  };
+
   page.open(url, function(status) {
     if (status == 'success') {
       console.log('page opened');
@@ -121,7 +131,7 @@ service = server.listen(port, function(request, response) {
     } else {
       response.write('Error: Url returned status ' + status + "\n");
       page.release();
-      response.close();
+      // response.close();
     }
   });
   console.log("----------- open called..: ");
