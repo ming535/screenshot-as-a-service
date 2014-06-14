@@ -109,8 +109,10 @@ service = server.listen(port, function(request, response) {
     if (status == 'success') {
       console.log('page opened');
       window.setTimeout(function () {
-        console.error("----- going to render")
         console.log('render: ', path)
+        page.evaluate(function() {
+          document.body.bgColor = 'white';
+        });
         page.render(path, {format: 'jpeg', quality: '100'});
         response.write('Success: Screenshot saved to ' + path + "\n");
         page.release();
