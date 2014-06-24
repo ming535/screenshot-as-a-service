@@ -71,7 +71,7 @@ service = server.listen(port, function(request, response) {
   var page = new WebPage();
   var delay = request.headers.delay || 0;
   // delay = 200;
-  console.log("----------- delay: ", delay);
+  // console.log("----------- delay: ", delay);
 
   try {
     page.viewportSize = {
@@ -108,7 +108,7 @@ service = server.listen(port, function(request, response) {
 
   page.onResourceReceived = function(rsp) {
     console.log("response status: ", rsp.status);
-    if (rsp.status == 404) {
+    if (rsp.status >= 400) {
       response.write('Error: Url returned status ' + status + "\n");
       page.release();
       // response.close();
