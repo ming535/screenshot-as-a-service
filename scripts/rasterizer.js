@@ -107,7 +107,7 @@ service = server.listen(port, function(request, response) {
   }
 
   page.onResourceReceived = function(rsp) {
-    if (rsp.status >= 400) {
+    if ((rsp.status != 200) && (rsp.status != 301) && (rsp.status != 302) ) {
       console.log("response status: ", rsp.status);
       response.write('Error: Url returned status ' + status + "\n");
       page.release();
