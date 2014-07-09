@@ -61,7 +61,7 @@ module.exports = function(app, useCors) {
     console.log('filePath: ', filePath)
 
     var callbackUrl = req.param('callback', false) ? utils.url(req.param('callback')) : false;
-    console.log('callbackUrl: ', callbackUrl)
+
     // dont use cache
     // if (fs.existsSync(filePath)) {
     //   console.log('Request for %s - Found in cache', url, ' filePath: ', filePath);
@@ -69,8 +69,7 @@ module.exports = function(app, useCors) {
     //   return;
     // }
 
-    console.log('Request for %s - Rasterizing it', url);
-    console.log('Reeust options: ', options)
+    // console.log('Reeust options: ', options)
     var s3Filename = filename
     processImageUsingRasterizer(options, filePath, s3Filename, res, callbackUrl, function(err) { if(err) next(err); });
   });
@@ -93,11 +92,9 @@ module.exports = function(app, useCors) {
   }
 
   var processImageUsingRasterizer = function(rasterizerOptions, filePath, s3Filename, res, callbackUrl, errorCallback) {
-    console.log('processImageUsingRasterizer...');
     if (callbackUrl) {
       // asynchronous
-      res.send('Will post screenshot to ' + callbackUrl + ' when processed');
-      console.log("Will callRasterizer and return async");
+      console.log("callRasterizer and return async");
       callRasterizer(rasterizerOptions, function(error) {
         if (error) return errorCallback(error);
 

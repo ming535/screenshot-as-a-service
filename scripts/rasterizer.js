@@ -66,8 +66,6 @@ service = server.listen(port, function(request, response) {
   var url = request.headers.url;
   var path = basePath + (request.headers.filename || (url.replace(new RegExp('https?://'), '').replace(/\//g, '.') + '.png'));
 
-  console.log("----------- path: ", path);
-
   var page = new WebPage();
   var delay = request.headers.delay || 0;
   // delay = 200;
@@ -107,8 +105,11 @@ service = server.listen(port, function(request, response) {
   }
 
   page.onResourceReceived = function(rsp) {
-    if ((rsp.status != 200) && (rsp.status != 301) && (rsp.status != 302) && (rsp.status != 304)) {
+    // if ((rsp.status != 200) && (rsp.status != 301) && (rsp.status != 302) && (rsp.status != 304)) {
+    if (rsp.status >= 400) {
+
       console.log("response status: ", rsp.status);
+      console.log('Response (#' + rsp.id + ', stage "' + rsp.stage + '"): ' + JSON.stringify(rsp));
       response.write('Error: Url returned status ' + status + "\n");
       page.release();
       // response.close();
@@ -121,7 +122,9 @@ service = server.listen(port, function(request, response) {
       window.setTimeout(function () {
         console.log('render: ', path)
         page.evaluate(function() {
-          document.body.bgColor = 'white';
+          if (document && document.body) {
+            document.body.bgColor = 'white';
+          }
         });
         page.render(path, {format: 'jpeg', quality: '100'});
         response.write('Success: Screenshot saved to ' + path + "\n");
@@ -134,7 +137,7 @@ service = server.listen(port, function(request, response) {
       // response.close();
     }
   });
-  console.log("----------- open called..: ");
+
   // must start the response now, or phantom closes the connection
   response.statusCode = 200;
   response.write('');
